@@ -13,34 +13,60 @@ import {
   Name,
   PostImage,
   Description,
-  Actions,
-  Left,
-  Action,
+  Loading,
 } from './styles';
 
 const Feed = () => {
   const [feed, setFeed] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function loadPage(pageNumber = page, shouldRefresh = false) {
+    if (total && pageNumber > total) return; // não executar código abaixo dessa linha caso o if retorne true, afim de otimizar as chamadas de api
+
+    setLoading(true);
+
+    const response = await fetch(
+      `http://localhost:3000/feed?_expand=author&_limit=5&_page=${pageNumber}`,
+    );
+
+    const data = await response.json();
+    const totalItems = response.headers.get('X-Total-Count');
+
+    setTotal(Math.ceil(totalItems / 5)); // Atualmente a api retorna 4 paginas (20 items)
+    setFeed(shouldRefresh ? data : [...feed, ...data]);
+    setPage(pageNumber + 1);
+    setLoading(false);
+  }
+
+  async function refreshList() {
+    setRefreshing(true);
+
+    await loadPage(1, true);
+
+    setRefreshing(false);
+  }
 
   useEffect(() => {
-    async function loadFeed() {
-      const response = await fetch(
-        'http://localhost:3000/feed?_expand=author&_limit=5&_page=1',
-      );
-
-      const data = await response.json();
-      setFeed(data);
-    }
-    loadFeed();
+    loadPage();
   }, []);
+
   return (
     <View>
       <FlatList
         data={feed}
+        onEndReached={() => loadPage()}
+        onEndReachedThreshold={0.1}
         keyExtractor={post => String(post.id)}
+        ListFooterComponent={loading && <Loading />}
+        onRefresh={refreshList}
+        refreshing={refreshing}
         renderItem={({item}) => (
           <Post>
             <Header>
-              <Avatar
+              <Avatarx
                 ratio={item.author.avatar.aspectRatio}
                 source={{uri: item.author.avatar}}
               />
@@ -48,14 +74,14 @@ const Feed = () => {
             </Header>
 
             <PostImage ratio={item.aspectRatio} source={{uri: item.image}} />
-            <Actions>
+            {/* <Actions>
               <Left>
                 <Action source={like} />
                 <Action source={comment} />
                 <Action source={share} />
               </Left>
               <Action source={save} />
-            </Actions>
+            </Actions> */}
             <Description>
               <Name>{item.author.name} </Name>
               {item.description} orem ipsum dolor sit amet, consectetur
