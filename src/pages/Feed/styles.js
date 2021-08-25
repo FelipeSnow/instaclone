@@ -10,8 +10,7 @@ export const Header = styled.View`
 export const Avatar = styled.Image`
   width: 30px;
   height: 30px;
-  border-radius: ${50};
-  border: 3px solid palevioletred;
+  border-radius: 50;
   margin-right: 7px;
 `;
 export const Name = styled.Text`
@@ -41,4 +40,11 @@ export const Action = styled.Image`
   margin-right: 5px;
   margin-bottom: 15px;
   margin-top: 10px;
+`;
+
+export const Loading = styled.ActivityIndicator.attrs({
+  size: 'small',
+  color: '#999',
+})`
+  margin: 30px 0;
 `;
